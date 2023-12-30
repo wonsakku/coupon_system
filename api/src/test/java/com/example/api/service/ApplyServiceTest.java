@@ -118,6 +118,35 @@ class ApplyServiceTest {
 
 
 
+    @Test
+    public void 한명당_한개의_쿠폰_발급() throws InterruptedException {
+        int threadCount = 1000;
+        final ExecutorService executorService = Executors.newFixedThreadPool(32);
+
+        // countDownLatch --> 다른 스레드에서 수행하는 작업을 기다리도록 도와주는 클래스
+        final CountDownLatch latch = new CountDownLatch(threadCount);
+
+        for(int i = 0 ; i < threadCount ; i++){
+            long userId = i;
+            executorService.submit(() -> {
+                try {
+                    applyService.applyRedisSet(1l);
+                }finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+        Thread.sleep(5_000);
+
+        final long count = couponRepository.count();
+        assertThat(count).isEqualTo(1);
+    }
+
+
+
+
 
 
 
